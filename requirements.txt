@@ -1,0 +1,25 @@
+# Deep Learning Core
+# For NVIDIA CUDA acceleration on your RTX 3050:
+# Run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+torch>=2.2.0
+torchvision>=0.17.0
+
+# ONNX Graph Definition & Manipulation
+onnx>=1.15.0
+
+# ONNX Runtime (Engine for executing ONNX models)
+onnxruntime>=1.17.0
+
+# AMD Quark Quantizer (Official AMD toolkit for INT8 / XINT8 quantization)
+amd-quark
+
+# Computer Vision & Numerical Array Processing
+numpy>=1.24.0,<2.0.0
+opencv-python>=4.8.0
+
+# PDF & Documentation Generation for Study Guides
+reportlab>=4.0.0
+
+# Pretty Console Output
+rich>=13.0.0
+

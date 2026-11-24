@@ -1,0 +1,49 @@
+# ==============================================================================
+# Git Ignore Configuration for AI & Heterogeneous Computing Project
+# ==============================================================================
+
+# 1. Virtual Environments (Prevents tracking thousands of installed library files)
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# 2. Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# 3. Model Weights & Cache (Uncomment if you don't want to push binary weights to GitHub)
+# models/*.onnx
+# models/*.pt
+# models/*.pth
+# models/*.bin
+
+# 4. OS & IDE Specific
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+
+# 5. Build Artifacts & C++ / CUDA temporary outputs
+build/
+dist/
+*.egg-info/
+*.so
+*.dll
+*.obj
+*.o
+*.lib
+*.exp
+
+# 6. Logs & Temp Files
+*.log
+tmp/
+temp/

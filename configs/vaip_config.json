@@ -1,0 +1,9 @@
+{
+  "target": "DPUCAHX8H",
+  "vaip_config": {
+    "num_of_dpu_runners": 1,
+    "compiler_flags": "--target DPUCAHX8H --batch_size 1"
+  },
+  "comment": "Configuration file for AMD Vitis AI Execution Provider (NPU/DPU target)"
+}
+
