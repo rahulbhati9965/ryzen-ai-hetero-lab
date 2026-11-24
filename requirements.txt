@@ -17,6 +17,11 @@ amd-quark
 numpy>=1.24.0,<2.0.0
 opencv-python>=4.8.0
 
+# Production API Serving (Docker & Kubernetes)
+fastapi>=0.110.0
+uvicorn>=0.28.0
+python-multipart>=0.0.9
+
 # PDF & Documentation Generation for Study Guides
 reportlab>=4.0.0
 

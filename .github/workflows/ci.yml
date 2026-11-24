@@ -1,0 +1,42 @@
+name: Hetero AI Lab CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Verify Hardware Fallback & Environment
+      run: |
+        python -c "import torch, onnx, onnxruntime; print('PyTorch:', torch.__version__); print('ONNX Runtime:', onnxruntime.__version__)"
+
+    - name: Test Step 1 (Model Export to ONNX)
+      run: |
+        python src/step1_export_onnx.py
+
+    - name: Test Step 3 (ONNX Runtime Inference Execution)
+      run: |
+        python src/step3_ort_inference.py
+
+    - name: Test Docker Build
+      run: |
+        docker build -t ryzen-ai-hetero-service:ci .

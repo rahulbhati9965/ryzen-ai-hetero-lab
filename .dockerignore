@@ -1,0 +1,24 @@
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Python Virtual Environment & Bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Documentation & PDF Guides (Keeps Docker Image Lightweight)
+*.pdf
+generate_phase0_pdf.py
+generate_phase1_pdf.py
+
+# Local Logs & Temp files
+*.log
+tmp/
+temp/
