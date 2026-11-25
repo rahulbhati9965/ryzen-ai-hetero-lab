@@ -68,5 +68,14 @@ This file tracks the exact versions of all hardware, compilers, drivers, and sof
 * Produced **`01_Phase1_Model_Export_Quantization_Inference_Guide.pdf`**.
 * Pushed repository to GitHub: [`ryzen-ai-hetero-lab`](https://github.com/rahulbhati9965/ryzen-ai-hetero-lab).
 
-### Phase 2: The GPU Acceleration Lab (Upcoming)
-* *Target*: AMD HIP, NVIDIA CUDA Toolkit / `nvcc`, PyTorch C++ Extensions (`pybind11`), and dual-compiler kernel build system.
+### Phase 2: The GPU Acceleration Lab (CUDA & AMD HIP)
+* Developed single-source portable C++ GPU kernel (`src/kernels/vector_add.hip`) compatible with both **AMD HIP** and **NVIDIA CUDA**.
+* Built end-to-end Host/Device memory lifecycle demonstration in `src/kernels/main.cpp`.
+* Compiled and executed native kernel using **GCC 13.3.0** via WSL2 with NVIDIA driver CUDA UMD 13.4.
+* Built benchmark and thread-hierarchy simulator harness in `src/test_gpu_kernel.py` benchmarking 10,000,000 float32 elements:
+  - Python Single-Core: ~977.74 ms (1.0x baseline, 0.12 GB/s)
+  - Compiled Native C++: 104.14 ms (9.4x speedup, 1.15 GB/s)
+  - NumPy SIMD (AVX): 15.19 ms (64.4x speedup, 7.90 GB/s)
+  - PyTorch Multi-threaded Engine: 8.06 ms (121.3x speedup, 14.89 GB/s)
+* Produced **`02_Phase2_CUDA_and_HIP_GPU_Programming_Guide.pdf`** using ReportLab.
+
