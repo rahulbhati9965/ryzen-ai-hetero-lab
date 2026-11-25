@@ -5,7 +5,8 @@ FASTAPI INFERENCE SERVICE FOR CONTAINERIZED DEPLOYMENT
 This server exposes our ONNX Runtime deep learning engine over HTTP:
 - GET  /health   -> Used by Kubernetes / Docker for health probes
 - GET  /info     -> Returns model status, active hardware provider, and precision
-- POST /predict  -> Runs inference on input image data and returns top predictions
+- POST /predict  -> Runs inference on input image data, applies Softmax,
+                    and returns human-readable labels + Top-5 probabilities!
 ================================================================================
 """
 
@@ -13,28 +14,40 @@ import os
 import sys
 import time
 import io
+import json
 import numpy as np
 from PIL import Image
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from pydantic import BaseModel
 import onnxruntime as ort
 
 app = FastAPI(
     title="Ryzen AI Heterogeneous Inference Service",
     description="Containerized ONNX Runtime inference engine with AMD Quark INT8 & Vitis AI fallbacks",
-    version="1.0.0"
+    version="1.1.0"
 )
 
-# Global session cache
+# Global session & label cache
 SESSION = None
 MODEL_TYPE = "INT8" # Default to quantized model
 INPUT_NAME = None
 OUTPUT_NAME = None
+LABELS = []
+
+def load_labels():
+    global LABELS
+    labels_path = os.path.join("configs", "imagenet_classes.json")
+    if os.path.exists(labels_path):
+        with open(labels_path, "r") as f:
+            LABELS = json.load(f)
+    else:
+        LABELS = [f"Class {i}" for i in range(1000)]
 
 def get_session():
     global SESSION, MODEL_TYPE, INPUT_NAME, OUTPUT_NAME
     if SESSION is not None:
         return SESSION
+
+    load_labels()
 
     model_int8 = os.path.join("models", "mobilenet_v2_quantized.onnx")
     model_fp32 = os.path.join("models", "mobilenet_v2.onnx")
@@ -64,9 +77,9 @@ def get_session():
 
 @app.on_event("startup")
 def startup_event():
-    """Load model into memory when container boots up."""
+    """Load model and labels into memory when container boots up."""
     get_session()
-    print(f"[SERVER] Model initialized: {MODEL_TYPE}")
+    print(f"[SERVER] Model initialized: {MODEL_TYPE} with {len(LABELS)} labels")
 
 @app.get("/")
 def root():
@@ -91,14 +104,16 @@ def model_info():
         "input_node": sess.get_inputs()[0].name,
         "input_shape": sess.get_inputs()[0].shape,
         "output_node": sess.get_outputs()[0].name,
-        "output_shape": sess.get_outputs()[0].shape
+        "output_shape": sess.get_outputs()[0].shape,
+        "num_classes": len(LABELS)
     }
 
 @app.post("/predict")
 async def predict_image(file: UploadFile = File(...)):
     """
     Accepts an uploaded image file (JPEG/PNG), preprocesses it to [1, 3, 224, 224],
-    and runs ONNX Runtime inference.
+    runs ONNX Runtime inference, computes Softmax probabilities, and returns
+    human-readable object names with a Top-5 ranking.
     """
     sess = get_session()
     
@@ -125,18 +140,30 @@ async def predict_image(file: UploadFile = File(...)):
         outputs = sess.run([OUTPUT_NAME], {INPUT_NAME: input_tensor})
         latency_ms = (time.perf_counter() - t0) * 1000.0
         
-        predictions = outputs[0][0]
-        top_class_id = int(np.argmax(predictions))
-        confidence = float(predictions[top_class_id])
+        raw_logits = outputs[0][0]
+        
+        # Softmax: convert raw numbers into clean 0.0 - 1.0 probabilities
+        exp_logits = np.exp(raw_logits - np.max(raw_logits))
+        probabilities = exp_logits / np.sum(exp_logits)
+        
+        # Get Top-5 predictions
+        top5_indices = np.argsort(probabilities)[::-1][:5]
+        top5 = [
+            {
+                "rank": rank + 1,
+                "class_id": int(idx),
+                "label": LABELS[idx] if idx < len(LABELS) else f"Class {idx}",
+                "confidence_percent": f"{probabilities[idx] * 100:.2f}%"
+            }
+            for rank, idx in enumerate(top5_indices)
+        ]
         
         return {
-            "prediction": {
-                "top_class_id": top_class_id,
-                "confidence_score": confidence
-            },
+            "top_prediction": top5[0],
+            "top_5": top5,
             "latency_ms": round(latency_ms, 2),
             "model_precision": MODEL_TYPE,
-            "provider": sess.get_providers()[0]
+            "active_hardware_provider": sess.get_providers()[0]
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Image processing error: {str(e)}")

@@ -1,38 +1,34 @@
 # ==============================================================================
-# Multi-Stage Production Dockerfile for AI Inference Service
+# Production Lightweight Dockerfile for AI Inference Service
 # ==============================================================================
 FROM python:3.11-slim AS base
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install minimal OS dependencies for computer vision & native math
+# Install minimal OS dependencies for healthcheck & image processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    libgl1 \
-    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install python packages
-COPY requirements.txt .
+# Copy lightweight server requirements & install
+COPY requirements-server.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements-server.txt
 
-# Copy configuration, exported models, and application code
+# Copy configs, model weights, and server code
 COPY configs/ ./configs/
 COPY models/ ./models/
-COPY src/ ./src/
+COPY src/server.py ./src/server.py
 
 # Expose HTTP port for API inference
 EXPOSE 8000
 
-# Container healthcheck (Kubernetes / Docker probe)
+# Container healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start FastAPI inference server
+# Start FastAPI server
 CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8000"]
