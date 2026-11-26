@@ -79,3 +79,14 @@ This file tracks the exact versions of all hardware, compilers, drivers, and sof
   - PyTorch Multi-threaded Engine: 8.06 ms (121.3x speedup, 14.89 GB/s)
 * Produced **`02_Phase2_CUDA_and_HIP_GPU_Programming_Guide.pdf`** using ReportLab.
 
+### Phase 3: Advanced GPU Kernels (Tiled GEMM & Shared Memory)
+* Developed single-source portable C++ GEMM kernel (`src/kernels/matrix_multiply.hip`) with both Naive 2D and Shared Memory (LDS) Tiling.
+* Built C++ host runner `src/kernels/main_gemm.cpp` validating 100% numerical correctness.
+* Built Python benchmark and 2D grid/block coordinate simulator in `src/test_gemm.py` across [512 x 512] matrices (268.4 MFLOPs):
+  - Python Triply-Nested Loop: 13,567.54 ms (0.02 GFLOP/s, 1.0x baseline)
+  - Native C++ Tiled Kernel: 313.15 ms (0.86 GFLOP/s, 43.3x speedup)
+  - NumPy BLAS (AVX2): 2.51 ms (106.95 GFLOP/s, 5,405x speedup)
+  - PyTorch Multi-Threaded BLAS: 1.87 ms (143.17 GFLOP/s, 7,236x speedup)
+* Produced **`03_Phase3_Tiled_Matrix_Multiplication_and_Shared_Memory_Guide.pdf`** using ReportLab.
+
+
